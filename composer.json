@@ -1,0 +1,16 @@
+{
+    "name": "ahmed/portfolio",
+    "description": "This is a portfolio website of Ahmed Olusesi",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Ahmed\\Portfolio\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Ahmed Olusesi"
+        }
+    ],
+    "require": {}
+}
