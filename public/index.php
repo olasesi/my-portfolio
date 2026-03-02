@@ -722,7 +722,7 @@
                 <div class="hc-body">
                   <div class="hc-metric-row">
                     <div class="hc-metric">
-                      <div class="hc-metric-num">12+</div>
+                      <div class="hc-metric-num">15+</div>
                       <div class="hc-metric-label">Years</div>
                     </div>
                     <div class="hc-metric">
