@@ -1,0 +1,85 @@
+services:
+  # ── PHP 8.2 + Apache ──────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ahmed_portfolio_app
+    restart: unless-stopped
+    ports:
+      - "8080:80" # Site → http://localhost:8080
+    volumes:
+      - .:/var/www/html # Live reload — edits reflect instantly
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-portfolio}
+      - DB_USERNAME=${DB_USERNAME:-portfolio_user}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - portfolio_net
+
+  # ── MySQL 8 ───────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: ahmed_portfolio_db
+    restart: unless-stopped
+    ports:
+      - "3307:3306" # Exposed on 3307 to avoid conflicts with local MySQL
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
+      MYSQL_DATABASE: ${DB_DATABASE:-portfolio}
+      MYSQL_USER: ${DB_USERNAME:-portfolio_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - db_data:/var/lib/mysql # Persistent data survives container restarts
+      - ./database/init:/docker-entrypoint-initdb.d # Auto-runs .sql files on first start
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${DB_ROOT_PASSWORD:-rootsecret}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - portfolio_net
+
+  # ── phpMyAdmin ────────────────────────────────────────────
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: ahmed_portfolio_pma
+    restart: unless-stopped
+    ports:
+      - "8081:80" # phpMyAdmin → http://localhost:8081
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - portfolio_net
+
+# ── Named volumes ─────────────────────────────────────────
+volumes:
+  db_data:
+    driver: local
+
+# ── Network ───────────────────────────────────────────────
+networks:
+  portfolio_net:
+    driver: bridge

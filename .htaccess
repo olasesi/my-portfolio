@@ -1,0 +1,17 @@
+# ============================================================
+#  ROOT .htaccess
+#  Redirects all web traffic into the public/ directory.
+#  The project root (composer files, src/, etc.) is never
+#  directly accessible from the browser.
+# ============================================================
+
+Options -Indexes
+
+RewriteEngine On
+
+# Block direct access to sensitive project files
+RewriteRule ^(composer\.(json|lock)|\.env.*|vendor/.*|src/.*)$ - [F,L]
+
+# If the request is NOT already targeting public/, rewrite it there
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/$1 [L]
