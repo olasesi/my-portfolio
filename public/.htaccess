@@ -1,121 +1,83 @@
 # ============================================================
-
-# public/.htaccess
-
-# - Serves public/ as the web root (no /public in URLs)
-
-# - Removes .php extensions from all URLs
-
-# - Canonical redirect (with .php → without .php)
-
-# - Custom error pages
-
-# - Security hardening headers
-
+#  public/.htaccess  (XAMPP / Windows — localhost/ahmed-olusesi/)
+#  This file is the real web root.
 # ============================================================
 
 Options -Indexes -MultiViews
 DirectoryIndex index.php
 
 # ── Security Headers ─────────────────────────────────────
-
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
-    # Remove server signature
-    Header unset Server
     Header always unset X-Powered-By
 </IfModule>
 
 # ── Hide PHP version ──────────────────────────────────────
-
 <IfModule mod_php8.c>
     php_flag expose_php Off
 </IfModule>
 
-# ── Block access to sensitive files ──────────────────────
-
-<FilesMatch "\.(env|log|sh|sql|bak|config|dist|fla|psd|ini|pem|key|htpasswd)$">
-Order Allow,Deny
-Deny from all
+# ── Block sensitive files ─────────────────────────────────
+<FilesMatch "\.(env|log|sh|sql|bak|ini|pem|key|htpasswd)$">
+    Require all denied
 </FilesMatch>
 
-# Block dotfiles (except .htaccess itself)
-
-RewriteRule (^|/)\. - [F,L]
-
 # ── Custom Error Pages ────────────────────────────────────
-
-ErrorDocument 400 /errors/400.php
-ErrorDocument 401 /errors/401.php
-ErrorDocument 403 /errors/403.php
-ErrorDocument 404 /errors/404.php
-ErrorDocument 500 /errors/500.php
-ErrorDocument 503 /errors/503.php
+ErrorDocument 400 /ahmed-olusesi/public/errors/400.php
+ErrorDocument 401 /ahmed-olusesi/public/errors/401.php
+ErrorDocument 403 /ahmed-olusesi/public/errors/403.php
+ErrorDocument 404 /ahmed-olusesi/public/errors/404.php
+ErrorDocument 500 /ahmed-olusesi/public/errors/500.php
+ErrorDocument 503 /ahmed-olusesi/public/errors/503.php
 
 # ── URL Rewriting ─────────────────────────────────────────
-
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /
+    RewriteBase /ahmed-olusesi/public/
 
-    # 1. Force HTTPS (uncomment when SSL certificate is active)
-    # RewriteCond %{HTTPS} off
-    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+    # 1. Block dotfiles (but allow .htaccess itself to be read)
+    RewriteRule (^|/)\.(?!htaccess) - [F,L]
 
-    # 2. Force non-www (uncomment and set your domain)
-    # RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
-    # RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+    # 2. Canonical: /about.php → /about  (strip .php from URL bar)
+    RewriteCond %{THE_REQUEST} \s/+ahmed-olusesi/public/(.+?)\.php[\s?] [NC]
+    RewriteRule ^ /ahmed-olusesi/public/%1 [R=301,L]
 
-    # 3. Canonical: redirect /page.php → /page (strip extension)
-    RewriteCond %{THE_REQUEST} \s/+(.+?)\.php[\s?] [NC]
-    RewriteRule ^ /%1 [R=301,L]
-
-    # 4. Skip rewrite for real files and directories
+    # 3. Skip real files and directories — serve them directly
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # 5. Route clean URLs → .php files
-    #    /about          → about.php
-    #    /portfolio      → portfolio.php
-    #    /blog           → blog.php
-    #    /contact        → contact.php
-    #    /blog/my-post   → blog/my-post.php  (for dynamic blog posts)
+    # 4. Route clean URLs → .php files
+    #    /ahmed-olusesi/public/about      → about.php
+    #    /ahmed-olusesi/public/portfolio  → portfolio.php
     RewriteCond %{REQUEST_FILENAME}.php -f
     RewriteRule ^(.+?)/?$ $1.php [L]
 
-    # 6. Trailing slash removal  /about/ → /about
+    # 5. Trailing slash removal: /about/ → /about
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)/$ /$1 [R=301,L]
-
+    RewriteRule ^(.*)/$ /ahmed-olusesi/public/$1 [R=301,L]
 </IfModule>
 
 # ── Browser Caching ───────────────────────────────────────
-
 <IfModule mod_expires.c>
     ExpiresActive On
-    ExpiresByType image/jpg         "access plus 1 year"
-    ExpiresByType image/jpeg        "access plus 1 year"
-    ExpiresByType image/png         "access plus 1 year"
-    ExpiresByType image/gif         "access plus 1 year"
-    ExpiresByType image/webp        "access plus 1 year"
-    ExpiresByType image/svg+xml     "access plus 1 year"
-    ExpiresByType image/x-icon      "access plus 1 year"
-    ExpiresByType text/css          "access plus 1 month"
-    ExpiresByType application/javascript "access plus 1 month"
-    ExpiresByType font/woff2        "access plus 1 year"
-    ExpiresByType font/woff         "access plus 1 year"
-    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType image/jpeg              "access plus 1 year"
+    ExpiresByType image/png               "access plus 1 year"
+    ExpiresByType image/webp              "access plus 1 year"
+    ExpiresByType image/svg+xml           "access plus 1 year"
+    ExpiresByType image/x-icon            "access plus 1 year"
+    ExpiresByType text/css                "access plus 1 month"
+    ExpiresByType application/javascript  "access plus 1 month"
+    ExpiresByType font/woff2              "access plus 1 year"
+    ExpiresByType font/woff               "access plus 1 year"
 </IfModule>
 
 # ── Gzip Compression ─────────────────────────────────────
-
 <IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+    AddOutputFilterByType DEFLATE text/html text/plain text/css
     AddOutputFilterByType DEFLATE application/javascript application/json
     AddOutputFilterByType DEFLATE image/svg+xml font/woff font/woff2
 </IfModule>

@@ -1,17 +1,25 @@
 # ============================================================
-#  ROOT .htaccess
-#  Redirects all web traffic into the public/ directory.
-#  The project root (composer files, src/, etc.) is never
-#  directly accessible from the browser.
+
+# ROOT .htaccess (XAMPP / Windows — localhost/ahmed-olusesi/)
+
+# Funnels all browser traffic into public/.
+
 # ============================================================
 
 Options -Indexes
 
 RewriteEngine On
+RewriteBase /ahmed-olusesi/
 
-# Block direct access to sensitive project files
-RewriteRule ^(composer\.(json|lock)|\.env.*|vendor/.*|src/.*)$ - [F,L]
+# ── 1. Block sensitive project files ─────────────────────
 
-# If the request is NOT already targeting public/, rewrite it there
-RewriteCond %{REQUEST_URI} !^/public/
-RewriteRule ^(.*)$ public/$1 [L]
+RewriteRule ^(composer\.(json|lock)|\.env._|vendor(/._)?|src(/.\*)?)$ - [F,L]
+
+# ── 2. Already inside public/ — stop, prevent loop ───────
+
+RewriteCond %{REQUEST_URI} ^/ahmed-olusesi/public/ [NC]
+RewriteRule ^ - [L]
+
+# ── 3. Forward everything else into public/ ──────────────
+
+RewriteRule ^(.\*)$ public/$1 [L]
