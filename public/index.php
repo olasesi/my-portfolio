@@ -3,8 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="google-site-verification" content="C6yGsC9a7EQRTRrT_WX92ZLntEpQ7_XDZ99Y9klBxMI" />
+  <meta content="Software Developer, Full Stack Developer, Web Developer, React Developer, Node.js, Python, AWS, DevOps, PHP, Javascript, Vue, Laravel, Node express, Django, Nextjs" name="keywords">
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FD24VJ5LY0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-FD24VJ5LY0');
+</script>
   <title>Ahmed Olusesi — Software Developer</title>
   <meta name="description" content="Full-stack software developer based in Lagos — building production-grade web apps, mobile products, and APIs with React, Vue, Next.js, Laravel, Node.js, Python, React Native, Docker and more." />
+  
   <link rel="stylesheet" href="./assets/styles/style.css" />
   <style>
 
@@ -303,7 +315,7 @@
               <div class="hc-body">
                 <div class="hc-metric-row">
                   <div class="hc-metric">
-                    <div class="hc-metric-num">6+</div>
+                    <div class="hc-metric-num">15+</div>
                     <div class="hc-metric-label">Years</div>
                   </div>
                   <div class="hc-metric">
