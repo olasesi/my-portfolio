@@ -1,6 +1,6 @@
 # ============================================================
 
-# ROOT .htaccess (XAMPP / Windows — localhost/my-portfolio/)
+# ROOT .htaccess (XAMPP / Windows — localhost/)
 
 # Funnels all browser traffic into public/.
 
@@ -9,7 +9,7 @@
 Options -Indexes
 
 RewriteEngine On
-RewriteBase /my-portfolio/
+RewriteBase /
 
 # ── 1. Block sensitive project files ─────────────────────
 
@@ -17,7 +17,7 @@ RewriteRule ^(composer\.(json|lock)|\.env._|vendor(/._)?|src(/.\*)?)$ - [F,L]
 
 # ── 2. Already inside public/ — stop, prevent loop ───────
 
-RewriteCond %{REQUEST_URI} ^/my-portfolio/public/ [NC]
+RewriteCond %{REQUEST_URI} ^/public/ [NC]
 RewriteRule ^ - [L]
 
 # ── 3. Forward everything else into public/ ──────────────
