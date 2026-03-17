@@ -1,6 +1,5 @@
 # ============================================================
-#  public/.htaccess  (XAMPP / Windows — localhost/)
-#  This file is the real web root.
+# public/.htaccess — cPanel / Apache (ahmed-olusesi.com)
 # ============================================================
 
 Options -Indexes -MultiViews
@@ -41,8 +40,9 @@ ErrorDocument 503 /public/errors/503.php
     # 1. Block dotfiles (but allow .htaccess itself to be read)
     RewriteRule (^|/)\.(?!htaccess) - [F,L]
 
-    # 2. Canonical: /about.php → /about  (strip .php from URL bar)
-    RewriteCond %{THE_REQUEST} \s/+my-portfolio/public/(.+?)\.php[\s?] [NC]
+    # 2. Canonical: strip .php extension from URL bar
+    #    Matches live domain — /public/about.php → /public/about
+    RewriteCond %{THE_REQUEST} \s/+public/(.+?)\.php[\s?] [NC]
     RewriteRule ^ /public/%1 [R=301,L]
 
     # 3. Skip real files and directories — serve them directly
@@ -51,14 +51,13 @@ ErrorDocument 503 /public/errors/503.php
     RewriteRule ^ - [L]
 
     # 4. Route clean URLs → .php files
-    #    /public/about      → about.php
-    #    /public/portfolio  → portfolio.php
     RewriteCond %{REQUEST_FILENAME}.php -f
     RewriteRule ^(.+?)/?$ $1.php [L]
 
     # 5. Trailing slash removal: /about/ → /about
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)/$ /public/$1 [R=301,L]
+
 </IfModule>
 
 # ── Browser Caching ───────────────────────────────────────
