@@ -240,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fname'])) {
 }
 ?>
 
-  <?php include './includes/nav.php'; ?>
+  <?php include './partials/nav.php'; ?>
 
   <div class="page-wrap">
 
@@ -487,7 +487,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fname'])) {
 
   </div><!-- /page-wrap -->
 
-  <?php include './includes/footer.php'; ?>
+  <?php include './partials/footer.php'; ?>
 
   <script src="./assets/js/main.js"></script>
 

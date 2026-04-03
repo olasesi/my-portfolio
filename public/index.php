@@ -20,6 +20,12 @@
   <link rel="stylesheet" href="./assets/styles/style.css" />
   <style>
 
+    /* ─── FIX: Prevent any child element from causing horizontal scroll ─── */
+    /* This is the root fix — clips anything that bleeds outside the viewport  */
+    body, .page-wrap {
+      overflow-x: hidden;
+    }
+
     /* ─── HERO ─── */
     .hero {
       min-height: calc(100vh - 90px);
@@ -32,7 +38,10 @@
     }
     .hero::after {
       content: "";
-      position: absolute; top: 0; right: -3rem; bottom: 0; width: 50vw;
+      position: absolute; top: 0; right: 0; bottom: 0; width: 50%;
+      /* FIX: was "right: -3rem" which pushed the pseudo-element outside the viewport.
+         Changed to right: 0 so it stays within bounds. The radial-gradient already
+         creates the soft fade effect without needing to bleed outside. */
       background: radial-gradient(ellipse 70% 80% at 70% 50%, rgba(0,201,174,0.06) 0%, transparent 70%);
       pointer-events: none;
     }
@@ -91,6 +100,8 @@
       border-radius: 12px; padding: 0.85rem 1.1rem;
       box-shadow: 0 16px 40px rgba(0,0,0,0.4);
       display: flex; align-items: center; gap: 0.7rem; font-size: 0.78rem;
+      /* FIX: prevent floats from bleeding outside their relative parent */
+      max-width: calc(100% - 2rem);
     }
     .hero-float-1 { top: -18px; right: 30px; animation: hf1 4s ease-in-out infinite; }
     .hero-float-2 { bottom: -16px; left: 20px; animation: hf2 5s ease-in-out infinite; }
@@ -236,25 +247,58 @@
     .cta-sub { font-size: 0.95rem; color: var(--slate-light); line-height: 1.7; max-width: 400px; }
     .cta-right { display: flex; gap: 1rem; flex-shrink: 0; position: relative; z-index: 1; }
 
-    /* ─── RESPONSIVE ─── */
+    /* ════════════════════════════════
+       RESPONSIVE BREAKPOINTS
+       FIX: Added intermediate 1100px breakpoint for the hero grid so the right
+       card doesn't overflow on mid-range screens before the 960px breakpoint
+       hides it. Also added box-sizing safety net.
+    ═════════════════════════════════ */
+
+    /* FIX: Ensure padding is included in width calculations globally */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    /* FIX: New intermediate breakpoint — hero columns were colliding at ~1000-1100px */
+    @media (max-width: 1100px) {
+      .hero { gap: 2.5rem; }
+      .stat-item { padding: 1.5rem 1.25rem; }
+      .expertise-grid { grid-template-columns: repeat(2,1fr); }
+      .t-grid { grid-template-columns: repeat(2,1fr); }
+    }
+
     @media (max-width: 960px) {
       .hero { grid-template-columns: 1fr; min-height: auto; padding: 3rem 0 4rem; }
       .hero-right { display: none; }
+      /* FIX: stats go 2x2 on tablet */
       .stats-inner { grid-template-columns: 1fr 1fr; }
       .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
       .stat-item:nth-child(odd) { border-right: 1px solid var(--border); }
+      .stat-item:nth-child(3),
+      .stat-item:nth-child(4) { border-bottom: none; }
       .expertise-grid { grid-template-columns: 1fr; }
       .proj-grid { grid-template-columns: 1fr; }
       .t-grid { grid-template-columns: 1fr; }
-      .cta-section { flex-direction: column; text-align: center; }
+      .cta-section { flex-direction: column; text-align: center; padding: 3rem 2rem; }
       .cta-sub { max-width: 100%; }
       .cta-right { flex-wrap: wrap; justify-content: center; }
     }
+
+    /* FIX: Small mobile — stats stack fully, proj visual shrinks */
+    @media (max-width: 480px) {
+      .stats-inner { grid-template-columns: 1fr; }
+      .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
+      .stat-item:nth-child(odd) { border-right: none; }
+      .stat-item:last-child { border-bottom: none; }
+      .proj-visual { font-size: 2.5rem; height: 140px; }
+      .cta-section { padding: 2.5rem 1.5rem; }
+    }
+    
   </style>
 </head>
 <body>
 
-  <?php include './includes/nav.php'; ?>
+  <?php include './partials/nav.php'; ?>
 
   <div class="page-wrap">
 
@@ -279,7 +323,7 @@
               I'm Ahmed — a full-stack software developer based in Lagos.
               I design and build complete digital products: responsive web apps,
               cross-platform mobile apps, secure APIs, and the infrastructure
-              that keeps them running. Six years across agencies and product
+              that keeps them running. Seven years across agencies and product
               companies, shipping things people actually use.
             </p>
             <div class="hero-actions reveal reveal-d2">
@@ -380,7 +424,7 @@
         <div class="stats-inner">
           <div class="stat-item reveal">
             <div class="stat-num">
-              <span class="teal" data-target="6" data-suffix="+">0+</span>
+              <span class="teal" data-target="15" data-suffix="+">0+</span>
             </div>
             <div class="stat-label">Years building production software</div>
           </div>
@@ -398,7 +442,7 @@
           </div>
           <div class="stat-item reveal reveal-d3">
             <div class="stat-num">
-              <span class="teal" data-target="4" data-suffix="">0</span>
+              <span class="teal" data-target="5" data-suffix="">0</span>
             </div>
             <div class="stat-label">Companies &amp; agencies served</div>
           </div>
@@ -719,7 +763,7 @@
 
   </div><!-- /page-wrap -->
 
-  <?php include './includes/footer.php'; ?>
+  <?php include './partials/footer.php'; ?>
 
   <script src="./assets/js/main.js"></script>
   <script>
