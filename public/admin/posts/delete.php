@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../../includes/db.php';
-require_once __DIR__ . '/../../includes/auth.php';
-require_once __DIR__ . '/../../includes/helpers.php';
+require_once __DIR__ . '/../../../config.php';
+require_once __DIR__ . '/../../../includes/db.php';
+require_once __DIR__ . '/../../../includes/auth.php';
+require_once __DIR__ . '/../../../includes/helpers.php';
 
 require_login();
 
@@ -21,6 +21,8 @@ $post = $st->fetch();
 
 if ($post) {
     delete_upload($post['featured_image']);
+    // post_tags are deleted via CASCADE, but let's be explicit
+    $pdo->prepare("DELETE FROM post_tags WHERE post_id = ?")->execute([$id]);
     $pdo->prepare("DELETE FROM posts WHERE id = ?")->execute([$id]);
     flash('success', 'Post deleted.');
 } else {

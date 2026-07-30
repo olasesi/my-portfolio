@@ -1,5 +1,5 @@
 # ============================================================
-# public/.htaccess — cPanel / Apache (ahmed-olusesi.com)
+# public/.htaccess — Local XAMPP + Production
 # ============================================================
 
 Options -Indexes -MultiViews
@@ -14,49 +14,42 @@ DirectoryIndex index.php
     Header always unset X-Powered-By
 </IfModule>
 
-# ── Hide PHP version ──────────────────────────────────────
-<IfModule mod_php8.c>
-    php_flag expose_php Off
-</IfModule>
-
 # ── Block sensitive files ─────────────────────────────────
 <FilesMatch "\.(env|log|sh|sql|bak|ini|pem|key|htpasswd)$">
     Require all denied
 </FilesMatch>
 
 # ── Custom Error Pages ────────────────────────────────────
-ErrorDocument 400 /public/errors/400.php
-ErrorDocument 401 /public/errors/401.php
-ErrorDocument 403 /public/errors/403.php
-ErrorDocument 404 /public/errors/404.php
-ErrorDocument 500 /public/errors/500.php
-ErrorDocument 503 /public/errors/503.php
+ErrorDocument 400 /ahmed-olusesi/public/errors/400.php
+ErrorDocument 401 /ahmed-olusesi/public/errors/401.php
+ErrorDocument 403 /ahmed-olusesi/public/errors/403.php
+ErrorDocument 404 /ahmed-olusesi/public/errors/404.php
+ErrorDocument 500 /ahmed-olusesi/public/errors/500.php
+ErrorDocument 503 /ahmed-olusesi/public/errors/503.php
 
 # ── URL Rewriting ─────────────────────────────────────────
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /public/
+    RewriteBase /ahmed-olusesi/public/
 
-    # 1. Block dotfiles (but allow .htaccess itself to be read)
+    # 1. Block dotfiles
     RewriteRule (^|/)\.(?!htaccess) - [F,L]
 
-    # 2. Canonical: strip .php extension from URL bar
-    #    Matches live domain — /public/about.php → /public/about
-    RewriteCond %{THE_REQUEST} \s/+public/(.+?)\.php[\s?] [NC]
-    RewriteRule ^ /public/%1 [R=301,L]
-
-    # 3. Skip real files and directories — serve them directly
+    # 2. Skip real files and directories
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
+
+    # 3. Route /post/{slug} → post.php?slug={slug}
+    RewriteRule ^post/([a-z0-9-]+)/?$ post.php?slug=$1 [L,QSA]
 
     # 4. Route clean URLs → .php files
     RewriteCond %{REQUEST_FILENAME}.php -f
     RewriteRule ^(.+?)/?$ $1.php [L]
 
-    # 5. Trailing slash removal: /about/ → /about
+    # 5. Trailing slash removal
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)/$ /public/$1 [R=301,L]
+    RewriteRule ^(.*)/$ /ahmed-olusesi/public/$1 [R=301,L]
 
 </IfModule>
 

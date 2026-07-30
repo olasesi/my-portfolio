@@ -209,31 +209,78 @@
 <body>
 
 <?php
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
 /* ── Server-side form handling ── */
 $sent    = false;
 $error   = false;
-$fields  = ['fname','lname','email','company','message'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fname'])) {
-  $fname   = trim(strip_tags($_POST['fname']   ?? ''));
-  $lname   = trim(strip_tags($_POST['lname']   ?? ''));
-  $email   = filter_var(trim($_POST['email']   ?? ''), FILTER_VALIDATE_EMAIL);
-  $company = trim(strip_tags($_POST['company'] ?? ''));
-  $budget  = trim(strip_tags($_POST['budget']  ?? ''));
-  $message = trim(strip_tags($_POST['message'] ?? ''));
+  $fname   = trim($_POST['fname']   ?? '');
+  $lname   = trim($_POST['lname']   ?? '');
+  $email   = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
+  $company = trim($_POST['company'] ?? '');
+  $budget  = trim($_POST['budget']  ?? '');
+  $message = trim($_POST['message'] ?? '');
 
   if ($fname && $lname && $email && $message) {
-    $to      = 'olusesia@gmail.com';
-    $subject = "Portfolio enquiry from $fname $lname" . ($company ? " — $company" : '');
-    $body    = "Name: $fname $lname\n";
-    $body   .= "Email: $email\n";
-    if ($company)  $body .= "Company: $company\n";
-    if ($budget)   $body .= "Budget: $budget\n";
-    $body   .= "\nMessage:\n$message";
-    $headers = "From: noreply@ahmedolusesi.com\r\nReply-To: $email\r\nX-Mailer: PHP/" . phpversion();
+    $pdo = db();
+    $fullName = "$fname $lname";
+    $subject = "Portfolio enquiry from $fullName" . ($company ? " — $company" : '');
 
-    $sent = @mail($to, $subject, $body, $headers);
-    if (!$sent) $error = true;
+    $pdo->prepare("
+      INSERT INTO messages (name, email, company, budget, subject, body)
+      VALUES (?, ?, ?, ?, ?, ?)
+    ")->execute([$fullName, $email, $company ?: null, $budget ?: null, $subject, $message]);
+
+    // Send email notification via PHPMailer
+    $mail = new PHPMailer(true);
+    try {
+      $mail->isSMTP();
+      $mail->Host       = SMTP_HOST;
+      $mail->SMTPAuth   = true;
+      $mail->Username   = SMTP_USERNAME;
+      $mail->Password   = SMTP_PASSWORD;
+      $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+      $mail->Port       = SMTP_PORT;
+      $mail->CharSet    = 'UTF-8';
+
+      $mail->setFrom(SMTP_FROM, SMTP_FROM_NAME);
+      $mail->addAddress(SMTP_FROM);
+      $mail->addReplyTo($email, $fullName);
+
+      $mail->isHTML(true);
+      $mail->Subject = $subject;
+
+      $body  = "<h2 style='color:#07111F;'>New Contact Form Submission</h2>";
+      $body .= "<table style='border-collapse:collapse;width:100%;max-width:600px;'>";
+      $body .= "<tr><td style='padding:8px 12px;font-weight:700;background:#f4f4f4;border:1px solid #ddd;'>Name</td><td style='padding:8px 12px;border:1px solid #ddd;'>{$fullName}</td></tr>";
+      $body .= "<tr><td style='padding:8px 12px;font-weight:700;background:#f4f4f4;border:1px solid #ddd;'>Email</td><td style='padding:8px 12px;border:1px solid #ddd;'>{$email}</td></tr>";
+      if ($company) $body .= "<tr><td style='padding:8px 12px;font-weight:700;background:#f4f4f4;border:1px solid #ddd;'>Company</td><td style='padding:8px 12px;border:1px solid #ddd;'>{$company}</td></tr>";
+      if ($budget)  $body .= "<tr><td style='padding:8px 12px;font-weight:700;background:#f4f4f4;border:1px solid #ddd;'>Budget</td><td style='padding:8px 12px;border:1px solid #ddd;'>{$budget}</td></tr>";
+      $body .= "</table>";
+      $body .= "<h3 style='margin-top:20px;color:#07111F;'>Message</h3>";
+      $body .= "<p style='line-height:1.7;color:#333;'>" . nl2br(htmlspecialchars($message)) . "</p>";
+      $body .= "<hr style='margin-top:20px;border:none;border-top:1px solid #ddd;'>";
+      $body .= "<p style='font-size:12px;color:#999;'>This message was sent via the contact form on ahmed-olusesi.com</p>";
+
+      $mail->Body = $body;
+      $mail->AltBody = "Name: {$fullName}\nEmail: {$email}\n" . ($company ? "Company: {$company}\n" : '') . ($budget ? "Budget: {$budget}\n" : '') . "\nMessage:\n{$message}";
+
+      $mail->send();
+    } catch (Exception $e) {
+      // Email failed but message is saved in DB — log error, don't block user
+      error_log("PHPMailer error: " . $mail->ErrorInfo);
+    }
+
+    $sent = true;
   } else {
     $error = true;
   }

@@ -162,11 +162,27 @@ function layout_head(string $title = 'Dashboard'): void { ?>
     .page-btn:hover, .page-btn.active { background: var(--teal); color: var(--navy); border-color: var(--teal); font-weight: 700; }
     .page-btn.disabled { opacity: 0.35; pointer-events: none; }
 
+    .menu-toggle {
+      display: none; background: var(--navy2); border: 1px solid var(--borderl);
+      cursor: pointer; padding: 0.6rem; border-radius: 8px; position: fixed;
+      top: 0.75rem; left: 0.75rem; z-index: 101;
+    }
+    .menu-toggle span { display: block; width: 20px; height: 2px; background: var(--white); border-radius: 2px; margin: 4px 0; transition: all 0.3s; }
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      z-index: 99; backdrop-filter: blur(4px);
+    }
+
     @media (max-width: 900px) {
-      .sidebar { transform: translateX(-100%); }
+      .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.open { display: block; }
+      .menu-toggle { display: block; }
       .main { margin-left: 0; }
       .stats-row { grid-template-columns: 1fr 1fr; }
       .form-row { grid-template-columns: 1fr; }
+      .content { padding: 1.25rem; }
+      .topbar { padding: 1rem 1.25rem 1rem 3.5rem !important; }
     }
   </style>
 </head>
@@ -180,7 +196,11 @@ function sb_active(string $path): string {
     return str_contains($uri, $path) ? 'active' : '';
 }
 ?>
-<aside class="sidebar">
+<button class="menu-toggle" onclick="openSidebar()" aria-label="Open menu">
+  <span></span><span></span><span></span>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
   <a class="sb-logo" href="<?= ADMIN_URL ?>">Ahmed<span>.</span>Blog</a>
 
   <div class="sb-section">Content</div>
@@ -193,10 +213,24 @@ function sb_active(string $path): string {
   <a class="sb-link <?= sb_active('/categories/') ?>" href="<?= ADMIN_URL ?>/categories/index.php">
     <span class="sb-icon">🏷️</span> Categories
   </a>
+  <a class="sb-link <?= sb_active('/tags/') ?>" href="<?= ADMIN_URL ?>/tags/index.php">
+    <span class="sb-icon">🔖</span> Tags
+  </a>
+
+  <div class="sb-section">Website</div>
+  <a class="sb-link <?= sb_active('/messages/') ?>" href="<?= ADMIN_URL ?>/messages/index.php">
+    <span class="sb-icon">📬</span> Messages
+  </a>
+  <a class="sb-link <?= sb_active('/projects/') ?>" href="<?= ADMIN_URL ?>/projects/index.php">
+    <span class="sb-icon">💼</span> Projects
+  </a>
+  <a class="sb-link <?= sb_active('/subscribers/') ?>" href="<?= ADMIN_URL ?>/subscribers/index.php">
+    <span class="sb-icon">✉️</span> Subscribers
+  </a>
 
   <div class="sb-section">Site</div>
   <a class="sb-link" href="<?= SITE_URL ?>" target="_blank">
-    <span class="sb-icon">🌐</span> View Blog
+    <span class="sb-icon">🌐</span> View Site
   </a>
 
   <div class="sb-bottom">
@@ -213,6 +247,18 @@ function sb_active(string $path): string {
 <?php
 function layout_foot(): void { ?>
 </div><!-- /main -->
+<script>
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').style.display = 'block';
+  setTimeout(() => document.getElementById('sidebarOverlay').classList.add('open'), 10);
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+  setTimeout(() => { document.getElementById('sidebarOverlay').style.display = 'none'; }, 300);
+}
+</script>
 </body>
 </html>
 <?php } // end layout_foot ?>

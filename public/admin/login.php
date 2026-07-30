@@ -139,7 +139,7 @@ if ( $_SERVER[ 'REQUEST_METHOD' ] === 'POST' ) {
     <div class = 'logo'>Ahmed<span>.</span>Blog</div>
     <div class = 'sub'>Admin panel — sign in to continue.</div>
     <?php if ( $error ): ?>
-    <div class = 'error'>< ?= e( $error ) ?></div>
+    <div class = 'error'><?= e($error) ?></div>
     <?php endif;
     ?>
     <form method = 'POST' autocomplete = 'off'>

@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../../includes/db.php';
-require_once __DIR__ . '/../../includes/auth.php';
-require_once __DIR__ . '/../../includes/helpers.php';
+require_once __DIR__ . '/../../../config.php';
+require_once __DIR__ . '/../../../includes/db.php';
+require_once __DIR__ . '/../../../includes/auth.php';
+require_once __DIR__ . '/../../../includes/helpers.php';
 require_once __DIR__ . '/../layout.php';
 
 require_login();
@@ -14,18 +14,26 @@ $st->execute([$id]);
 $post = $st->fetch();
 if (!$post) { flash('error', 'Post not found.'); redirect(ADMIN_URL . '/posts/index.php'); }
 
+// Get current tag IDs for this post
+$tagSt = $pdo->prepare('SELECT tag_id FROM post_tags WHERE post_id = ?');
+$tagSt->execute([$id]);
+$postTagIds = array_column($tagSt->fetchAll(), 'tag_id');
+
 $errors = [];
-$input  = $post; // pre-fill form with existing values
+$input  = $post;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
 
-    $input['title']       = trim($_POST['title']       ?? '');
-    $input['slug']        = trim($_POST['slug']        ?? '');
-    $input['excerpt']     = trim($_POST['excerpt']     ?? '');
-    $input['body']        = $_POST['body']             ?? '';
-    $input['category_id'] = (int)($_POST['category_id'] ?? 0) ?: null;
-    $input['status']      = $_POST['status'] === 'published' ? 'published' : 'draft';
+    $input['title']            = trim($_POST['title']            ?? '');
+    $input['slug']             = trim($_POST['slug']             ?? '');
+    $input['excerpt']          = trim($_POST['excerpt']          ?? '');
+    $input['body']             = $_POST['body']                  ?? '';
+    $input['category_id']      = (int)($_POST['category_id'] ?? 0) ?: null;
+    $input['status']           = $_POST['status'] === 'published' ? 'published' : 'draft';
+    $input['meta_title']       = trim($_POST['meta_title']       ?? '');
+    $input['meta_description'] = trim($_POST['meta_description'] ?? '');
+    $tag_ids                   = array_map('intval', $_POST['tags'] ?? []);
 
     if (!$input['title']) $errors[] = 'Title is required.';
     if (!$input['body'])  $errors[] = 'Post body is required.';
@@ -33,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $input['slug'] = unique_slug($input['slug'], 'posts', $id);
 
-    // Handle new featured image upload
     $new_image = null;
     try {
         $new_image = handle_upload('featured_image');
@@ -41,11 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = $e->getMessage();
     }
 
-    // Handle "remove image" checkbox
     $remove_image = isset($_POST['remove_image']) && !$new_image;
 
     if (!$errors) {
-        // If replacing or removing, delete old file
         if ($new_image || $remove_image) {
             delete_upload($post['featured_image']);
         }
@@ -53,19 +58,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $st = $pdo->prepare("
             UPDATE posts
-            SET title=?, slug=?, excerpt=?, body=?, category_id=?, featured_image=?, status=?, updated_at=NOW()
+            SET title=?, slug=?, excerpt=?, body=?, category_id=?, featured_image=?, status=?,
+                meta_title=?, meta_description=?, updated_at=NOW()
             WHERE id=?
         ");
         $st->execute([
             $input['title'], $input['slug'], $input['excerpt'], $input['body'],
-            $input['category_id'], $final_image, $input['status'], $id,
+            $input['category_id'], $final_image, $input['status'],
+            $input['meta_title'] ?: $input['title'],
+            $input['meta_description'] ?: $input['excerpt'],
+            $id,
         ]);
+
+        // Sync tags
+        $pdo->prepare('DELETE FROM post_tags WHERE post_id = ?')->execute([$id]);
+        if ($tag_ids) {
+            $ptSt = $pdo->prepare('INSERT INTO post_tags (post_id, tag_id) VALUES (?, ?)');
+            foreach ($tag_ids as $tagId) {
+                $ptSt->execute([$id, $tagId]);
+            }
+        }
+
         flash('success', 'Post updated successfully.');
         redirect(ADMIN_URL . '/posts/edit.php?id=' . $id);
     }
 }
 
 $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
+$allTags    = $pdo->query("SELECT * FROM tags ORDER BY name")->fetchAll();
+
 layout_head('Edit Post');
 ?>
 <div class="topbar">
@@ -104,10 +125,30 @@ layout_head('Edit Post');
             </div>
           </div>
         </div>
-        <div class="card">
+
+        <div class="card" style="margin-bottom:1.5rem;">
           <div class="card-header"><div class="card-title">Content *</div></div>
           <div class="card-body">
             <textarea name="body" id="body"><?= e($input['body']) ?></textarea>
+          </div>
+        </div>
+
+        <!-- SEO -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">SEO Settings</div></div>
+          <div class="card-body">
+            <div class="fg">
+              <label class="fl">Meta Title</label>
+              <input type="text" name="meta_title" class="fc" placeholder="Leave blank to use post title"
+                     value="<?= e($input['meta_title'] ?? '') ?>" />
+              <div class="form-hint">Recommended: 50-60 characters.</div>
+            </div>
+            <div class="fg">
+              <label class="fl">Meta Description</label>
+              <textarea name="meta_description" class="fc" rows="3"
+                        placeholder="Leave blank to use excerpt…"><?= e($input['meta_description'] ?? '') ?></textarea>
+              <div class="form-hint">Recommended: 150-160 characters.</div>
+            </div>
           </div>
         </div>
       </div>
@@ -143,6 +184,30 @@ layout_head('Edit Post');
                 </option>
               <?php endforeach; ?>
             </select>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Tags</div></div>
+          <div class="card-body">
+            <?php if ($allTags): ?>
+              <div style="display:flex;flex-wrap:wrap;gap:0.5rem;max-height:180px;overflow-y:auto;">
+                <?php foreach ($allTags as $tag): ?>
+                  <label style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.3rem 0.65rem;border-radius:100px;border:1px solid var(--borderl);font-size:0.75rem;color:var(--slatel);cursor:pointer;transition:all 0.2s;background:rgba(255,255,255,0.03);">
+                    <input type="checkbox" name="tags[]" value="<?= $tag['id'] ?>"
+                           <?= in_array($tag['id'], $postTagIds) ? 'checked' : '' ?>
+                           style="accent-color:var(--teal);width:14px;height:14px;" />
+                    <?= e($tag['name']) ?>
+                  </label>
+                <?php endforeach; ?>
+              </div>
+            <?php else: ?>
+              <div class="form-hint">No tags created yet.</div>
+            <?php endif; ?>
+            <div class="form-hint" style="margin-top:0.5rem;">
+              <a href="<?= ADMIN_URL ?>/tags/index.php" style="color:var(--teal);">+ Manage tags</a>
+            </div>
           </div>
         </div>
 
@@ -184,15 +249,13 @@ layout_head('Edit Post');
   </form>
 </div>
 
-<script src="https://cdn.tiny.cloud/1/<?= TINYMCE_API_KEY ?>/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="https://cdn.tiny.cloud/1/6z7qm82fwc83gmvflic3a05avjor8k6ve06k1ynqjs2r6aoy/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
 <script>
 tinymce.init({
   selector: '#body',
   height: 520,
-  skin: 'oxide-dark',
-  content_css: 'dark',
-  plugins: ['advlist','autolink','lists','link','image','charmap','preview','searchreplace','fullscreen','insertdatetime','media','table','codesample','emoticons','wordcount'],
-  toolbar: 'undo redo | blocks | bold italic underline | forecolor | alignleft aligncenter alignright | bullist numlist | link image media | codesample | fullscreen',
+  plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+  toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat | codesample | fullscreen',
   codesample_languages: [
     {text:'HTML/XML',value:'markup'},{text:'JavaScript',value:'javascript'},
     {text:'TypeScript',value:'typescript'},{text:'CSS',value:'css'},
@@ -200,7 +263,6 @@ tinymce.init({
     {text:'Bash/Shell',value:'bash'},{text:'SQL',value:'sql'},
     {text:'JSON',value:'json'},{text:'Docker',value:'docker'},
   ],
-  codesample_global_prismjs: true,
   promotion: false, branding: false,
   content_style: `body { font-family:'Segoe UI',sans-serif; font-size:16px; color:#cdd6f4; background:#1e1e2e; line-height:1.8; padding:1rem; } pre[class*=language-] { background:#0d1117; border-radius:8px; }`,
 });

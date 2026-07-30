@@ -222,6 +222,16 @@
 </head>
 <body>
 
+  <?php
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
+$pdo = db();
+$projects = $pdo->query("SELECT * FROM projects WHERE status = 'published' ORDER BY sort_order ASC, created_at DESC")->fetchAll();
+$projectCount = count($projects);
+?>
+
   <?php include './partials/nav.php'; ?>
 
   <div class="page-wrap">
@@ -238,13 +248,13 @@
               Selected<br /><span class="teal">Work</span>
             </h1>
             <p class="section-sub reveal reveal-d2" style="margin-top:1rem;">
-              Eight projects across enterprise systems, full-stack web apps,
+              <?= $projectCount ?> projects across enterprise systems, full-stack web apps,
               mobile, e-commerce, and CMS — each one shipped and in use.
             </p>
           </div>
-          <div class="ph-stats reveal reveal-d2">
+            <div class="ph-stats reveal reveal-d2">
             <div class="ph-stat">
-              <div class="ph-stat-num">8</div>
+              <div class="ph-stat-num"><?= $projectCount ?></div>
               <div class="ph-stat-label">Projects</div>
             </div>
             <div class="ph-stat">
@@ -276,160 +286,39 @@
         </div>
 
         <div class="proj-list reveal reveal-d1">
-
-          <div class="proj-row" data-cat="fullstack backend" onclick="openPanel('nexaerp')">
-            <div class="proj-num">01</div>
-            <div class="proj-info">
-              <div class="proj-meta">
-                <span class="proj-cat">Full-Stack · Enterprise</span>
-                <span class="proj-year-sm">2024</span>
+          <?php if ($projects): ?>
+            <?php foreach ($projects as $i => $p): ?>
+              <?php
+                $num = str_pad($i + 1, 2, '0', STR_PAD_LEFT);
+                $techArr = array_filter(array_map('trim', explode(',', $p['tech_stack'] ?? '')));
+                $catLabel = ucwords(str_replace(',', ' · ', $p['category'] ?? ''));
+                $metricsData = json_decode($p['metrics'] ?? '[]', true);
+                $resultText = !empty($metricsData) ? $metricsData[0]['v'] . ' · ' . $metricsData[0]['l'] : '';
+              ?>
+              <div class="proj-row" data-cat="<?= e($p['category'] ?? '') ?>" onclick="openPanel(<?= $p['id'] ?>)">
+                <div class="proj-num"><?= $num ?></div>
+                <div class="proj-info">
+                  <div class="proj-meta">
+                    <span class="proj-cat"><?= e($catLabel) ?></span>
+                  </div>
+                  <div class="proj-name-row"><?= e($p['title']) ?></div>
+                  <div class="proj-tags-row">
+                    <?php foreach (array_slice($techArr, 0, 5) as $t): ?>
+                      <span class="proj-ptag"><?= e($t) ?></span>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+                <div class="proj-right">
+                  <?php if ($resultText): ?>
+                    <div class="proj-result"><?= e($resultText) ?></div>
+                  <?php endif; ?>
+                  <span class="proj-cta">Case Study →</span>
+                </div>
               </div>
-              <div class="proj-name-row">NexaERP — Enterprise Resource Planning Platform</div>
-              <div class="proj-tags-row">
-                <span class="proj-ptag">React</span><span class="proj-ptag">Laravel</span>
-                <span class="proj-ptag">MySQL</span><span class="proj-ptag">Docker</span>
-                <span class="proj-ptag">AWS</span>
-              </div>
-            </div>
-            <div class="proj-right">
-              <div class="proj-result">Multi-tenant · 5 permission levels</div>
-              <span class="proj-cta">Case Study →</span>
-            </div>
-          </div>
-
-          <div class="proj-row" data-cat="fullstack backend" onclick="openPanel('pulsecrm')">
-            <div class="proj-num">02</div>
-            <div class="proj-info">
-              <div class="proj-meta">
-                <span class="proj-cat">Full-Stack · SaaS CRM</span>
-                <span class="proj-year-sm">2023</span>
-              </div>
-              <div class="proj-name-row">PulseCRM — Sales &amp; Customer Management Platform</div>
-              <div class="proj-tags-row">
-                <span class="proj-ptag">Vue</span><span class="proj-ptag">Node.js</span>
-                <span class="proj-ptag">MongoDB</span><span class="proj-ptag">GraphQL</span>
-              </div>
-            </div>
-            <div class="proj-right">
-              <div class="proj-result">40-person sales team · Daily use</div>
-              <span class="proj-cta">Case Study →</span>
-            </div>
-          </div>
-
-          <div class="proj-row" data-cat="mobile backend" onclick="openPanel('trackr')">
-            <div class="proj-num">03</div>
-            <div class="proj-info">
-              <div class="proj-meta">
-                <span class="proj-cat">Mobile · Field Ops</span>
-                <span class="proj-year-sm">2023</span>
-              </div>
-              <div class="proj-name-row">Trackr — Field Operations Mobile App</div>
-              <div class="proj-tags-row">
-                <span class="proj-ptag">React Native</span><span class="proj-ptag">Expo</span>
-                <span class="proj-ptag">Node.js</span><span class="proj-ptag">MySQL</span>
-              </div>
-            </div>
-            <div class="proj-right">
-              <div class="proj-result">iOS &amp; Android · Offline-first</div>
-              <span class="proj-cta">Case Study →</span>
-            </div>
-          </div>
-
-          <div class="proj-row" data-cat="fullstack" onclick="openPanel('victruth')">
-            <div class="proj-num">04</div>
-            <div class="proj-info">
-              <div class="proj-meta">
-                <span class="proj-cat">Full-Stack · Services Platform</span>
-                <span class="proj-year-sm">2023</span>
-              </div>
-              <div class="proj-name-row">Victruth — Limousine, Events &amp; Vendor Services</div>
-              <div class="proj-tags-row">
-                <span class="proj-ptag">React</span><span class="proj-ptag">Laravel</span>
-                <span class="proj-ptag">Sanctum API</span><span class="proj-ptag">MySQL</span>
-              </div>
-            </div>
-            <div class="proj-right">
-              <div class="proj-result">victruth.com · Live</div>
-              <span class="proj-cta">Case Study →</span>
-            </div>
-          </div>
-
-          <div class="proj-row" data-cat="fullstack backend" onclick="openPanel('schoolportal')">
-            <div class="proj-num">05</div>
-            <div class="proj-info">
-              <div class="proj-meta">
-                <span class="proj-cat">Full-Stack · Education</span>
-                <span class="proj-year-sm">2022</span>
-              </div>
-              <div class="proj-name-row">School Portal — Combined Primary &amp; Secondary School System</div>
-              <div class="proj-tags-row">
-                <span class="proj-ptag">PHP</span><span class="proj-ptag">MySQL</span>
-                <span class="proj-ptag">Bootstrap</span><span class="proj-ptag">jQuery</span>
-              </div>
-            </div>
-            <div class="proj-right">
-              <div class="proj-result">4 user roles · Admission to results</div>
-              <span class="proj-cta">Case Study →</span>
-            </div>
-          </div>
-
-          <div class="proj-row" data-cat="frontend" onclick="openPanel('socialmedia')">
-            <div class="proj-num">06</div>
-            <div class="proj-info">
-              <div class="proj-meta">
-                <span class="proj-cat">Frontend · Social</span>
-                <span class="proj-year-sm">2022</span>
-              </div>
-              <div class="proj-name-row">Social Media UI — Full Frontend Implementation</div>
-              <div class="proj-tags-row">
-                <span class="proj-ptag">React</span><span class="proj-ptag">TailwindCSS</span>
-                <span class="proj-ptag">TypeScript</span>
-              </div>
-            </div>
-            <div class="proj-right">
-              <div class="proj-result">Pixel-perfect · Fully responsive</div>
-              <span class="proj-cta">Case Study →</span>
-            </div>
-          </div>
-
-          <div class="proj-row" data-cat="ecommerce backend" onclick="openPanel('businesslisting')">
-            <div class="proj-num">07</div>
-            <div class="proj-info">
-              <div class="proj-meta">
-                <span class="proj-cat">Backend · Business Listing</span>
-                <span class="proj-year-sm">2021</span>
-              </div>
-              <div class="proj-name-row">Business Listing — Search &amp; Discovery Platform</div>
-              <div class="proj-tags-row">
-                <span class="proj-ptag">PHP</span><span class="proj-ptag">MySQL</span>
-                <span class="proj-ptag">AJAX/jQuery</span><span class="proj-ptag">Bootstrap</span>
-              </div>
-            </div>
-            <div class="proj-right">
-              <div class="proj-result">Live search · Rating system</div>
-              <span class="proj-cta">Case Study →</span>
-            </div>
-          </div>
-
-          <div class="proj-row" data-cat="ecommerce" onclick="openPanel('ecommerce')">
-            <div class="proj-num">08</div>
-            <div class="proj-info">
-              <div class="proj-meta">
-                <span class="proj-cat">E-Commerce · PHP</span>
-                <span class="proj-year-sm">2019–2021</span>
-              </div>
-              <div class="proj-name-row">E-Commerce Suite — 3 Variants with Dashboard &amp; Payments</div>
-              <div class="proj-tags-row">
-                <span class="proj-ptag">PHP</span><span class="proj-ptag">MySQL</span>
-                <span class="proj-ptag">Payment API</span><span class="proj-ptag">WordPress</span>
-              </div>
-            </div>
-            <div class="proj-right">
-              <div class="proj-result">3 live stores · Upsell &amp; cross-sell</div>
-              <span class="proj-cta">Case Study →</span>
-            </div>
-          </div>
-
+            <?php endforeach; ?>
+          <?php else: ?>
+            <div style="text-align:center;padding:4rem;color:var(--slate);">No projects yet.</div>
+          <?php endif; ?>
         </div>
       </div>
     </section>
@@ -451,115 +340,22 @@
 
   <script src="./assets/js/main.js"></script>
   <script>
-  const data = {
-    nexaerp: {
-      cat: 'Full-Stack · Enterprise · 2024',
-      title: 'NexaERP — Enterprise Resource Planning',
-      overview: 'A multi-tenant ERP system built for mid-size businesses to manage inventory, procurement, HR, payroll, and financial reporting in one platform. Five granular permission levels with separate dashboards per role.',
-      challenge: 'The client was running five disconnected spreadsheet-based systems with no single source of truth. HR, inventory, and finance had no shared data layer, leading to hours of manual reconciliation every week.',
-      solution: 'Built a Laravel REST API backend with MySQL and a React frontend using a component library. Docker containerisation with a Jenkins CI/CD pipeline deploying to AWS EC2. Role-based access control (RBAC) with Laravel Sanctum. A React Native mobile companion app consumes the same API.',
-      tech: ['React', 'Laravel', 'MySQL', 'Docker', 'AWS EC2', 'Jenkins', 'Laravel Sanctum', 'React Native'],
-      metrics: [{v:'5',l:'Permission Levels'},{v:'Multi-tenant',l:'Architecture'},{v:'REST API',l:'Mobile-ready'}],
-      link: null
-    },
-    pulsecrm: {
-      cat: 'Full-Stack · SaaS CRM · 2023',
-      title: 'PulseCRM — Sales & Customer Platform',
-      overview: 'A full CRM platform for a 40-person sales team covering pipeline management, contact tracking, automated follow-up sequences, activity logging, and analytics dashboards.',
-      challenge: 'The sales team was managing deals in a mix of spreadsheets and WhatsApp threads. No visibility on pipeline health, no way to automate follow-ups, and no reporting for management.',
-      solution: 'Vue 3 frontend consuming a Node/Express GraphQL API backed by MongoDB. Real-time activity feeds via GraphQL subscriptions. Automated email follow-up sequences with configurable delay triggers. Dashboard analytics with chart.js. Deployed on AWS with PM2.',
-      tech: ['Vue 3', 'Node.js', 'Express', 'MongoDB', 'GraphQL', 'AWS', 'PM2'],
-      metrics: [{v:'40',l:'Sales Users'},{v:'GraphQL',l:'Real-time API'},{v:'Automated',l:'Follow-ups'}],
-      link: null
-    },
-    trackr: {
-      cat: 'Mobile · Field Operations · 2023',
-      title: 'Trackr — Field Operations App',
-      overview: 'A cross-platform iOS and Android app for managing field teams — task assignment, GPS check-ins, photo uploads, status updates, and offline-first report submission synced when connectivity returns.',
-      challenge: 'Field teams were operating in areas with unreliable internet. Reports were being lost, GPS check-ins were impossible mid-task, and managers had no real-time visibility.',
-      solution: 'React Native with Expo for the cross-platform client. Offline-first architecture using AsyncStorage with a background sync queue that pushes to a Node.js/MySQL REST API when connectivity returns. Push notifications via Expo Notifications. Published to both App Store and Google Play.',
-      tech: ['React Native', 'Expo', 'Node.js', 'MySQL', 'AsyncStorage', 'Expo Notifications'],
-      metrics: [{v:'iOS+Android',l:'Both Stores'},{v:'Offline-first',l:'Architecture'},{v:'GPS+Photo',l:'Check-ins'}],
-      link: null
-    },
-    victruth: {
-      cat: 'Full-Stack · Services Platform · 2023',
-      title: 'Victruth — Limousine, Events & Vendor Services',
-      overview: 'A full-service booking and vendor management platform for limousine hire, event planning, and vendor services. Multi-role system with customer, vendor, and admin portals.',
-      challenge: 'The business was managing bookings via phone and WhatsApp, with no way for vendors to self-manage their listings, no payment collection, and no visibility on booking status.',
-      solution: 'React frontend backed by a Laravel API secured with Laravel Sanctum. Payment gateway integration, lazy loading, email notifications, and SEO implementation. Vendor and admin dashboards with booking management, analytics, and content controls.',
-      tech: ['React', 'Laravel', 'Laravel Sanctum', 'MySQL', 'Payment Gateway', 'SEO'],
-      metrics: [{v:'3 Roles',l:'Customer/Vendor/Admin'},{v:'Live',l:'victruth.com'},{v:'Payments',l:'Integrated'}],
-      link: 'https://victruth.com'
-    },
-    schoolportal: {
-      cat: 'Full-Stack · Education · 2022',
-      title: 'School Portal — Combined School Management',
-      overview: 'A comprehensive school management system for combined primary and secondary schools — handling admissions, fee management, assignments, results, timetabling, and secure login for all user roles.',
-      challenge: 'All school records were paper-based. Admission processes were manual, fees were tracked in ledgers, and parents had no visibility on their children\'s academic progress.',
-      solution: 'Custom PHP application with a MySQL database. Four distinct role portals: school owner, administrator, teacher, and student. Admission workflow, fee collection tracking, assignment submission, and result generation. Hosted on cPanel with optimised queries for concurrent access.',
-      tech: ['PHP', 'MySQL', 'Bootstrap', 'jQuery', 'cPanel'],
-      metrics: [{v:'4 Roles',l:'Owner/Admin/Teacher/Student'},{v:'Live',l:'schoolportal.victruth.com'},{v:'Full',l:'Admission to Results'}],
-      link: 'https://schoolportal.victruth.com'
-    },
-    socialmedia: {
-      cat: 'Frontend · Social Platform · 2022',
-      title: 'Social Media UI — Full Frontend Implementation',
-      overview: 'Complete frontend implementation of a social media platform — feed, profiles, stories, messaging UI, notifications, and explore pages. Pixel-perfect, responsive, and animated throughout.',
-      challenge: 'Translating a complex, multi-page Figma design into production React code while maintaining design fidelity, responsive behaviour across all breakpoints, and smooth interactions.',
-      solution: 'React with TailwindCSS for styling, TypeScript for type safety, and a component architecture that mirrors the Figma component library. Custom hooks for feed and notification state. Smooth transitions using CSS and Framer-style patterns.',
-      tech: ['React', 'TypeScript', 'TailwindCSS'],
-      metrics: [{v:'Pixel-perfect',l:'Figma to code'},{v:'Fully',l:'Responsive'},{v:'Live',l:'socialmedia.victruth.com'}],
-      link: 'https://socialmedia.victruth.com'
-    },
-    businesslisting: {
-      cat: 'Backend · Business Directory · 2021',
-      title: 'Business Listing — Search & Discovery Platform',
-      overview: 'A business directory platform allowing businesses to list products and services, and users to search, rate, and share listings. AJAX-powered live search with no page reloads.',
-      challenge: 'Needed fast, accurate search across thousands of listings without full page reloads, plus a rating and social sharing system that worked across devices.',
-      solution: 'PHP backend with MySQL and optimised full-text search indexes. AJAX/jQuery for real-time search-as-you-type. Star rating system with vote aggregation. Product/service repost and share functionality integrated with social platforms.',
-      tech: ['PHP', 'MySQL', 'AJAX', 'jQuery', 'Bootstrap'],
-      metrics: [{v:'Live search',l:'AJAX-powered'},{v:'Star ratings',l:'Aggregated'},{v:'Live',l:'businesslisting.victruth.com'}],
-      link: 'https://businesslisting.victruth.com'
-    },
-    ecommerce: {
-      cat: 'E-Commerce · PHP · 2019–2021',
-      title: 'E-Commerce Suite — 3 Variants',
-      overview: 'Three distinct PHP e-commerce stores, each with a custom admin dashboard, product management, stock tracking, payment API integration, and automated social sharing on new listings.',
-      challenge: 'Needed three independent storefronts with different product catalogues and branding but shared infrastructure — with upsell/cross-sell logic and automatic Facebook sharing to drive organic reach.',
-      solution: 'Custom PHP with MySQL, shared codebase with per-store configuration. Payment gateway API integration with webhook handling. Automatic Facebook Graph API posting on new product publish. Upsell and cross-sell product relationship engine. Also handled an OpenCart to WooCommerce data migration for a client, preserving all SEO, Google Analytics, and Facebook Pixel continuity.',
-      tech: ['PHP', 'MySQL', 'Payment API', 'WordPress', 'WooCommerce', 'OpenCart', 'Facebook API'],
-      metrics: [{v:'3',l:'Live Stores'},{v:'Upsell/X-sell',l:'Engine'},{v:'Auto FB',l:'Sharing'}],
-      link: 'https://basicecommerce1.victruth.com'
-    }
-  };
+  const projectsData = <?= json_encode($projects) ?>;
 
   function openPanel(id) {
-    const d = data[id];
+    const d = projectsData.find(p => p.id == id);
     if (!d) return;
-    document.getElementById('sp-cat').textContent = d.cat;
+    const metrics = JSON.parse(d.metrics || '[]');
+    const tech = (d.tech_stack || '').split(',').map(t => t.trim()).filter(Boolean);
+    document.getElementById('sp-cat').textContent = (d.category || '').split(',').map(s => s.trim()).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' · ');
     document.getElementById('sp-title').textContent = d.title;
     document.getElementById('sp-body').innerHTML = `
-      <div class="sp-section">
-        <div class="sp-section-title">Project Overview</div>
-        <p class="sp-text">${d.overview}</p>
-      </div>
-      <div class="sp-section">
-        <div class="sp-section-title">The Challenge</div>
-        <p class="sp-text">${d.challenge}</p>
-      </div>
-      <div class="sp-section">
-        <div class="sp-section-title">The Approach</div>
-        <p class="sp-text">${d.solution}</p>
-      </div>
-      <div class="sp-metrics">
-        ${d.metrics.map(m => `<div class="sp-metric"><div class="sp-metric-val">${m.v}</div><div class="sp-metric-label">${m.l}</div></div>`).join('')}
-      </div>
-      <div class="sp-section" style="margin-top:1.75rem;">
-        <div class="sp-section-title">Tech Stack</div>
-        <div class="sp-tech-list">${d.tech.map(t => `<span class="sp-tech">${t}</span>`).join('')}</div>
-      </div>
-      ${d.link ? `<div class="sp-section"><div class="sp-section-title">Live Project</div><a href="${d.link}" target="_blank" rel="noopener" class="sp-link">Visit Site →</a></div>` : ''}
+      ${d.description ? `<div class="sp-section"><div class="sp-section-title">Project Overview</div><p class="sp-text">${d.description}</p></div>` : ''}
+      ${d.challenge ? `<div class="sp-section"><div class="sp-section-title">The Challenge</div><p class="sp-text">${d.challenge}</p></div>` : ''}
+      ${d.solution ? `<div class="sp-section"><div class="sp-section-title">The Approach</div><p class="sp-text">${d.solution}</p></div>` : ''}
+      ${metrics.length ? `<div class="sp-metrics">${metrics.map(m => `<div class="sp-metric"><div class="sp-metric-val">${m.v}</div><div class="sp-metric-label">${m.l}</div></div>`).join('')}</div>` : ''}
+      ${tech.length ? `<div class="sp-section" style="margin-top:1.75rem;"><div class="sp-section-title">Tech Stack</div><div class="sp-tech-list">${tech.map(t => `<span class="sp-tech">${t}</span>`).join('')}</div></div>` : ''}
+      ${d.live_url ? `<div class="sp-section"><div class="sp-section-title">Live Project</div><a href="${d.live_url}" target="_blank" rel="noopener" class="sp-link">Visit Site →</a></div>` : ''}
     `;
     document.getElementById('overlay').classList.add('open');
     document.getElementById('sidePanel').classList.add('open');
